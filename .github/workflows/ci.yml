@@ -1,0 +1,82 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + lint deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install ruff
+
+      - name: Ruff (pyflakes + syntax)
+        run: ruff check --select F,E9 src mcp_server coordinator-deliverables/skills/botcoin-mining/scripts
+
+      - name: Import + manifest-parity smoke
+        run: |
+          python - <<'PY'
+          import pathlib
+          import hermes_botcoin
+          from hermes_botcoin.plugin_entry import register, register_module
+          from hermes_botcoin.banner import render
+          from hermes_botcoin.coordinator import Coordinator
+          from hermes_botcoin.signer import resolve_signer_mode
+          from hermes_botcoin.schemas import ALL_TOOLS
+          from hermes_botcoin.tools import HANDLERS
+          from hermes_botcoin.cron_jobs import daily_ceiling, read_today_count
+
+          assert hermes_botcoin.__version__, "package version missing"
+          assert len(ALL_TOOLS) == len(HANDLERS), (
+              f"schema/handler drift: {len(ALL_TOOLS)} vs {len(HANDLERS)}"
+          )
+          for name, schema, _emoji, gated in ALL_TOOLS:
+              assert name in HANDLERS, f"missing handler: {name}"
+              assert schema["name"] == name
+              assert isinstance(gated, bool)
+
+          ungated = {name for name, _s, _e, gated in ALL_TOOLS if not gated}
+          assert ungated == {"botcoin_status", "botcoin_setup_check", "botcoin_scorecard"}, (
+              f"ungated set drifted: {ungated}"
+          )
+
+          skill = pathlib.Path(hermes_botcoin.__file__).parent / "skills" / "mining-strategy" / "SKILL.md"
+          assert skill.exists(), f"bundled skill missing from wheel: {skill}"
+
+          assert callable(register)
+          assert callable(register_module.register)
+          # Banner is ASCII art; tagline below it contains literal text.
+          assert "BOTCOIN" in render() and "Hermes" in render()
+          assert resolve_signer_mode({}) is None
+          assert Coordinator().base_url == "https://coordinator.agentmoney.net"
+          assert isinstance(daily_ceiling(), int)
+          assert isinstance(read_today_count(), int)
+
+          print("smoke OK — version", hermes_botcoin.__version__,
+                "tools", len(ALL_TOOLS), "handlers", len(HANDLERS))
+          PY
+
+      - name: Build wheel + sdist
+        run: |
+          pip install build
+          python -m build --outdir /tmp/dist
+          ls /tmp/dist

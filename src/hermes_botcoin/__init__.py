@@ -7,5 +7,5 @@ or via the `hermes_agent.plugins` entry point exposed in `pyproject.toml`
 in :mod:`hermes_botcoin.plugin_entry`.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __all__ = ["__version__"]

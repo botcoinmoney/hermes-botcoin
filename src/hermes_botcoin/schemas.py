@@ -406,18 +406,23 @@ BOTCOIN_AUTOSTOP_SCHEMA = {
 }
 
 
+# Per-tool registration metadata. `gated` controls whether the tool is hidden
+# from the model when no signer is configured. Diagnostic / read-only tools
+# (status, setup_check, scorecard) are ALWAYS visible — that's how a fresh
+# user discovers what's missing in the first place. Everything that needs to
+# auth, sign, or broadcast is gated.
 ALL_TOOLS = [
-    ("botcoin_status", BOTCOIN_STATUS_SCHEMA, "⛏"),
-    ("botcoin_setup_check", BOTCOIN_SETUP_CHECK_SCHEMA, "🩺"),
-    ("botcoin_scorecard", BOTCOIN_SCORECARD_SCHEMA, "🪪"),
-    ("botcoin_bind_agent_id", BOTCOIN_BIND_AGENT_ID_SCHEMA, "🔗"),
-    ("botcoin_request_challenge", BOTCOIN_REQUEST_CHALLENGE_SCHEMA, "🧩"),
-    ("botcoin_submit_artifact", BOTCOIN_SUBMIT_ARTIFACT_SCHEMA, "✅"),
-    ("botcoin_post_receipt", BOTCOIN_POST_RECEIPT_SCHEMA, "📜"),
-    ("botcoin_claim_rewards", BOTCOIN_CLAIM_REWARDS_SCHEMA, "💰"),
-    ("botcoin_stake", BOTCOIN_STAKE_SCHEMA, "🔒"),
-    ("botcoin_unstake", BOTCOIN_UNSTAKE_SCHEMA, "🔓"),
-    ("botcoin_withdraw_stake", BOTCOIN_WITHDRAW_STAKE_SCHEMA, "🏦"),
-    ("botcoin_autostart", BOTCOIN_AUTOSTART_SCHEMA, "⏱"),
-    ("botcoin_autostop", BOTCOIN_AUTOSTOP_SCHEMA, "🛑"),
+    ("botcoin_status",            BOTCOIN_STATUS_SCHEMA,            "⛏",  False),
+    ("botcoin_setup_check",       BOTCOIN_SETUP_CHECK_SCHEMA,       "🩺", False),
+    ("botcoin_scorecard",         BOTCOIN_SCORECARD_SCHEMA,         "🪪", False),
+    ("botcoin_bind_agent_id",     BOTCOIN_BIND_AGENT_ID_SCHEMA,     "🔗", True),
+    ("botcoin_request_challenge", BOTCOIN_REQUEST_CHALLENGE_SCHEMA, "🧩", True),
+    ("botcoin_submit_artifact",   BOTCOIN_SUBMIT_ARTIFACT_SCHEMA,   "✅", True),
+    ("botcoin_post_receipt",      BOTCOIN_POST_RECEIPT_SCHEMA,      "📜", True),
+    ("botcoin_claim_rewards",     BOTCOIN_CLAIM_REWARDS_SCHEMA,     "💰", True),
+    ("botcoin_stake",             BOTCOIN_STAKE_SCHEMA,             "🔒", True),
+    ("botcoin_unstake",           BOTCOIN_UNSTAKE_SCHEMA,           "🔓", True),
+    ("botcoin_withdraw_stake",    BOTCOIN_WITHDRAW_STAKE_SCHEMA,    "🏦", True),
+    ("botcoin_autostart",         BOTCOIN_AUTOSTART_SCHEMA,         "⏱",  True),
+    ("botcoin_autostop",          BOTCOIN_AUTOSTOP_SCHEMA,          "🛑", True),
 ]

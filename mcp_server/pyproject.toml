@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hermes-botcoin-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "MCP server for BOTCOIN proof-of-inference mining on Base. Drop-in for any MCP client (Hermes Agent, Claude Desktop, Cursor)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
   "mcp>=1.2.0,<2",
-  "hermes-botcoin>=0.1.1,<1",
+  "hermes-botcoin>=0.1.2,<1",
 ]
 
 [project.scripts]

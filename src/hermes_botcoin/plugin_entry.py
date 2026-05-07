@@ -52,9 +52,11 @@ def register(ctx: Any) -> None:
 
     _print_banner_once()
 
-    # 1. Tools
+    # 1. Tools — diagnostic tools (status, setup_check, scorecard) are
+    #    always visible so an unconfigured user can discover what's missing.
+    #    Everything that signs/broadcasts is gated on a configured signer.
     handler_map = tools.HANDLERS
-    for name, schema, emoji in ALL_TOOLS:
+    for name, schema, emoji, gated in ALL_TOOLS:
         handler = handler_map.get(name)
         if handler is None:
             logger.warning("BOTCOIN: schema %s has no handler — skipping", name)
@@ -64,7 +66,7 @@ def register(ctx: Any) -> None:
             toolset="botcoin",
             schema=schema,
             handler=handler,
-            check_fn=tools.check_configured,
+            check_fn=tools.check_configured if gated else None,
             emoji=emoji,
             description=schema.get("description", "")[:280],
         )
@@ -92,7 +94,9 @@ def register(ctx: Any) -> None:
 
     # 4. Bundled skill (the deep mining playbook). Registered as
     #    `botcoin:mining-strategy` — load explicitly via /skills load.
-    skill_md = Path(__file__).resolve().parent.parent.parent / "skills" / "mining-strategy" / "SKILL.md"
+    #    SKILL.md ships INSIDE the package so it survives `pip install`
+    #    (declared via [tool.setuptools.package-data] in pyproject.toml).
+    skill_md = Path(__file__).resolve().parent / "skills" / "mining-strategy" / "SKILL.md"
     if skill_md.exists():
         ctx.register_skill(
             "mining-strategy",

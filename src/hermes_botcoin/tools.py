@@ -582,6 +582,14 @@ def handle_bind_agent_id(params: dict | None = None, **_: Any) -> str:
     message = nonce.get("message")
     if not message:
         return _err("bind/nonce returned no message", body=nonce)
+
+    # Mirror the auth handshake's Address: canonicalization — the bind
+    # message embeds the address with the case Hermes' nonce response chose.
+    # Sending verify with the SAME case avoids spurious recovery mismatches
+    # on coordinator versions that compare strings instead of checksumming.
+    from .auth import _extract_address_from_message
+    canonical_miner = _extract_address_from_message(message) or miner
+
     try:
         sig = signer.personal_sign(message)
     except SignerError as exc:
@@ -589,11 +597,11 @@ def handle_bind_agent_id(params: dict | None = None, **_: Any) -> str:
     if not sig.startswith("0x"):
         sig = "0x" + sig
 
-    verify, err2 = _safe_call(coord.bind_verify, miner, message, sig)
+    verify, err2 = _safe_call(coord.bind_verify, canonical_miner, message, sig)
     if err2:
         return err2
     invalidate_cache()
-    return _ok({"miner": miner, "agentId": agent_id_str, "result": verify})
+    return _ok({"miner": canonical_miner, "agentId": agent_id_str, "result": verify})
 
 
 # ---------------------------------------------------------------------------

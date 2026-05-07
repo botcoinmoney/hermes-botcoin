@@ -163,7 +163,19 @@ class BankrSigner(Signer):
 
     def __init__(self, api_key: str, *, miner_address: Optional[str] = None) -> None:
         self._api_key = api_key
-        self._address = miner_address or self._resolve_evm_wallet()
+        # Bankr signs + broadcasts from its own EVM wallet — overriding the
+        # miner address with BOTCOIN_MINER_ADDRESS would silently desync the
+        # advertised miner from the actual signer (signature recovery fails,
+        # receipts get rejected). Always resolve from Bankr; warn loudly if
+        # the user-supplied override disagrees.
+        resolved = self._resolve_evm_wallet()
+        if miner_address and miner_address.lower() != resolved.lower():
+            logger.warning(
+                "BOTCOIN_MINER_ADDRESS=%s ignored — Bankr signer must use its own "
+                "EVM wallet %s (which actually signs + broadcasts).",
+                miner_address, resolved,
+            )
+        self._address = resolved
 
     def _post(self, path: str, body: dict, *, timeout: int = 60) -> dict:
         req = urllib.request.Request(

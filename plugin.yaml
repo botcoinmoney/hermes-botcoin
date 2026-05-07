@@ -1,5 +1,5 @@
 name: botcoin
-version: "0.1.0"
+version: "0.1.2"
 description: "Mine BOTCOIN on Base via the AgentMoney coordinator. Adds /botcoin slash, hermes botcoin CLI, an always-on discoverability hook, and a bundled mining-strategy skill. The agent itself is the solver — challenges flow as tool results, you produce the artifact, the plugin handles auth, signing, and on-chain receipts."
 author: "BOTCOIN (botcoinmoney)"
 license: MIT
@@ -7,6 +7,8 @@ homepage: "https://github.com/botcoinmoney/hermes-botcoin"
 provides_tools:
   - botcoin_status
   - botcoin_setup_check
+  - botcoin_scorecard
+  - botcoin_bind_agent_id
   - botcoin_request_challenge
   - botcoin_submit_artifact
   - botcoin_post_receipt
@@ -14,31 +16,13 @@ provides_tools:
   - botcoin_stake
   - botcoin_unstake
   - botcoin_withdraw_stake
-  - botcoin_scorecard
+  - botcoin_autostart
+  - botcoin_autostop
 provides_hooks:
   - pre_llm_call
   - on_session_start
-# requires_env declares the env vars the install command will INTERACTIVELY
-# prompt for (masked when secret: true). It is NOT a load gate — the plugin
-# loads cleanly with zero env vars set, and tools gate themselves via
-# check_configured(). Keep this list minimal: only credential-style values
-# whose presence meaningfully changes what the plugin can do, and which
-# benefit from masked input + URL hint at install time.
-#
-# Optional values with sane defaults (BOTCOIN_SIGNER, COORDINATOR_URL,
-# BASE_RPC_URL, BOTCOIN_MINER_ADDRESS, BOTCOIN_SOLVER_PROVIDER,
-# BOTCOIN_SOLVER_MODEL) are intentionally omitted — users configure them
-# via /botcoin setup or by hand-editing ~/.hermes/.env. See README and
-# .env.example for the full list.
-requires_env:
-  - name: BOTCOIN_MINER_KEY
-    description: "[Optional, choose one] 0x-prefixed EVM private key for the mining wallet. Preferred path — fastest, deterministic. Stays in ~/.hermes/.env and is never sent to any LLM."
-    secret: true
-  - name: BANKR_API_KEY
-    description: "[Optional, choose one] Bankr Agent API key with write access — alternative to BOTCOIN_MINER_KEY for users who already use Bankr."
-    url: "https://bankr.bot/api"
-    secret: true
-  - name: VENICE_API_KEY
-    description: "[Optional, recommended] Venice.ai API key for autonomous cron mining (privacy-by-default, deep reasoning). Skip if you only mine interactively — the agent uses your active Hermes model. Get one at https://venice.ai/settings/api."
-    url: "https://venice.ai/settings/api"
-    secret: true
+# requires_env intentionally omitted — Hermes treats missing requires_env values
+# as a load gate. The plugin loads cleanly with zero env vars set; tools that
+# need a signer are gated by check_fn at the registry layer, and `/botcoin
+# setup` walks the user through what's missing. Optional env vars (with
+# masked-input UX) are still documented in README + `.env.example`.
