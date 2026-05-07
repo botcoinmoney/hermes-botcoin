@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-botcoin"
+version = "0.1.0"
+description = "Mine BOTCOIN (proof-of-inference on Base) natively from Hermes Agent. Plugin + CLI + cron-mode autonomous miner."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "BOTCOIN (botcoinmoney)" }]
+keywords = ["hermes-agent", "botcoin", "base", "ethereum", "agent", "mining", "proof-of-inference", "crypto", "blockchain"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "eth-account>=0.13,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0,<10", "pytest-mock>=3.10,<4", "ruff>=0.5,<1"]
+
+[project.entry-points."hermes_agent.plugins"]
+# Pip-install path: any user who pip-installs this package gets the plugin
+# discovered automatically via importlib.metadata entry points (validated
+# against hermes_cli/plugins.py:_scan_entry_points).
+botcoin = "hermes_botcoin.plugin_entry:register_module"
+
+[project.scripts]
+hermes-botcoin-mine = "hermes_botcoin.cli:cron_entry"
+
+[project.urls]
+Homepage = "https://github.com/botcoinmoney/hermes-botcoin"
+Coordinator = "https://coordinator.agentmoney.net"
+Docs = "https://coordinator.agentmoney.net/.well-known/skill.md"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["hermes_botcoin*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

@@ -1,0 +1,13 @@
+{
+  "$comment": "Drop-in for https://coordinator.agentmoney.net/.well-known/skills/index.json. Hermes' WellKnownSkillSource (tools/skills_hub.py:708) requires a 'skills' array with name/description/files entries. Each entry's files list is fetched relative to /.well-known/skills/<name>/.",
+  "skills": [
+    {
+      "name": "botcoin-mining",
+      "description": "Mine BOTCOIN by solving proof-of-inference challenges on Base. Stake-gated (5M minimum). Coordinator returns ready-to-broadcast calldata for every on-chain action.",
+      "files": [
+        "SKILL.md",
+        "scripts/botcoin_client.py"
+      ]
+    }
+  ]
+}
