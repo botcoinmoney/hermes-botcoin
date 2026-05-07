@@ -127,12 +127,19 @@ def cron_entry() -> int:
     """Standalone CLI for cron-driven autonomous mining.
 
     Usage:
-        hermes-botcoin-mine [--solver anthropic|openai|openrouter|deepseek]
+        hermes-botcoin-mine [--solver venice|anthropic|openai|openrouter|deepseek]
                             [--model NAME] [--max-attempts N] [--cooldown S]
 
     Each invocation runs at most ``--max-attempts`` rounds (default 1), so
     a Hermes cron job at e.g. ``every 90s`` triggers a single attempt cycle
     per tick — matching the coordinator's per-miner rate window.
+
+    Daily cost ceiling: ``BOTCOIN_MAX_ATTEMPTS_PER_DAY`` (default 100). Each
+    successful or failed attempt increments a UTC-day counter at
+    ``$HERMES_HOME/.botcoin/attempts-YYYY-MM-DD.count``. Once the ceiling is
+    hit, this CLI exits 0 with a structured ``{"ok": false, "stage":
+    "ceiling"}`` payload — kept exit-zero so cron doesn't error-spam
+    delivery channels.
     """
     parser = argparse.ArgumentParser(prog="hermes-botcoin-mine")
     parser.add_argument("--solver", default=os.environ.get("BOTCOIN_SOLVER_PROVIDER", "venice"),
@@ -144,6 +151,8 @@ def cron_entry() -> int:
                         help="Seconds between attempts when --max-attempts > 1")
     parser.add_argument("--quiet", action="store_true",
                         help="Only emit JSON output on success/fail (good for cron deliver: hooks)")
+    parser.add_argument("--ignore-ceiling", action="store_true",
+                        help="Bypass BOTCOIN_MAX_ATTEMPTS_PER_DAY (manual ad-hoc runs only)")
     args = parser.parse_args()
 
     if not args.quiet:
@@ -152,14 +161,40 @@ def cron_entry() -> int:
             format="%(asctime)s %(levelname)s %(name)s %(message)s",
         )
 
+    from . import cron_jobs as cron_lifecycle
+
     attempts = max(1, args.max_attempts)
     last: Optional[dict[str, Any]] = None
     for i in range(attempts):
+        # Cost ceiling — checked at the START of each attempt so a long-running
+        # invocation can't burn through the day's budget mid-loop.
+        if not args.ignore_ceiling:
+            ceiling = cron_lifecycle.daily_ceiling()
+            today = cron_lifecycle.read_today_count()
+            if today >= ceiling:
+                last = {
+                    "ok": False,
+                    "stage": "ceiling",
+                    "error": f"daily attempt cap reached ({today}/{ceiling})",
+                    "today_count": today,
+                    "max_per_day": ceiling,
+                    "next_reset_utc": "00:00",
+                }
+                break
+
         last = autonomous_mine_one(
             solver_provider=args.solver,
             solver_model=args.model,
             log_prefix=f"cron-{i + 1}/{attempts}",
         )
+        if not args.ignore_ceiling:
+            try:
+                new_count = cron_lifecycle.increment_today_count()
+                if isinstance(last, dict):
+                    last["today_count"] = new_count
+            except OSError:
+                pass
+
         if not args.quiet:
             print(json.dumps(last, default=str))
         if i < attempts - 1:
@@ -167,6 +202,9 @@ def cron_entry() -> int:
 
     if args.quiet and last is not None:
         print(json.dumps(last, default=str))
+    # Always exit 0 on ceiling hit (planned no-op); else mirror result.
+    if last and last.get("stage") == "ceiling":
+        return 0
     return 0 if last and last.get("ok") else 1
 
 

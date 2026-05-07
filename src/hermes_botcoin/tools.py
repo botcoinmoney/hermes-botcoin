@@ -22,6 +22,7 @@ from typing import Any, Optional
 
 from .auth import AuthSession
 from .coordinator import Coordinator, CoordinatorError, is_retryable, respect_retry_after
+from . import cron_jobs as cron_lifecycle
 from .signer import Signer, SignerError, SignerNotConfigured, make_signer, resolve_signer_mode
 from .status import get_status, invalidate_cache
 from .trace import normalize_trace, serialize_submitted_answers
@@ -555,6 +556,75 @@ def handle_withdraw_stake(params: dict | None = None, **_: Any) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Tool handlers — ERC-8004 binding
+
+
+def handle_bind_agent_id(params: dict | None = None, **_: Any) -> str:
+    params = params or {}
+    agent_id = params.get("agent_id")
+    if agent_id in (None, ""):
+        return _err("agent_id is required (numeric ERC-8004 agent identifier)")
+    try:
+        agent_id_str = str(int(str(agent_id).strip()))
+    except (TypeError, ValueError):
+        return _err(f"agent_id must be numeric, got {agent_id!r}")
+
+    try:
+        signer = _signer()
+        miner = signer.address()
+    except (SignerError, SignerNotConfigured) as exc:
+        return _err(f"signer not ready: {exc}")
+    coord = _coord()
+
+    nonce, err = _safe_call(coord.bind_nonce, miner, agent_id_str)
+    if err:
+        return err
+    message = nonce.get("message")
+    if not message:
+        return _err("bind/nonce returned no message", body=nonce)
+    try:
+        sig = signer.personal_sign(message)
+    except SignerError as exc:
+        return _err(f"signing failed: {exc}")
+    if not sig.startswith("0x"):
+        sig = "0x" + sig
+
+    verify, err2 = _safe_call(coord.bind_verify, miner, message, sig)
+    if err2:
+        return err2
+    invalidate_cache()
+    return _ok({"miner": miner, "agentId": agent_id_str, "result": verify})
+
+
+# ---------------------------------------------------------------------------
+# Tool handlers — autonomous cron lifecycle
+
+
+def handle_autostart(params: dict | None = None, **_: Any) -> str:
+    params = params or {}
+    if not check_configured():
+        return _err("signer not configured — set BOTCOIN_MINER_KEY or BANKR_API_KEY first.")
+    try:
+        result = cron_lifecycle.autostart(
+            schedule=str(params.get("schedule") or "every 90s"),
+            solver=params.get("solver"),
+            model=params.get("model"),
+            max_per_day=params.get("max_per_day"),
+            deliver=str(params.get("deliver") or "local"),
+        )
+    except RuntimeError as exc:
+        return _err(str(exc))
+    return _ok(result)
+
+
+def handle_autostop(params: dict | None = None, **_: Any) -> str:
+    try:
+        return _ok(cron_lifecycle.autostop())
+    except RuntimeError as exc:
+        return _err(str(exc))
+
+
+# ---------------------------------------------------------------------------
 # Map for register()
 
 
@@ -562,6 +632,7 @@ HANDLERS = {
     "botcoin_status": handle_status,
     "botcoin_setup_check": handle_setup_check,
     "botcoin_scorecard": handle_scorecard,
+    "botcoin_bind_agent_id": handle_bind_agent_id,
     "botcoin_request_challenge": handle_request_challenge,
     "botcoin_submit_artifact": handle_submit_artifact,
     "botcoin_post_receipt": handle_post_receipt,
@@ -569,6 +640,8 @@ HANDLERS = {
     "botcoin_stake": handle_stake,
     "botcoin_unstake": handle_unstake,
     "botcoin_withdraw_stake": handle_withdraw_stake,
+    "botcoin_autostart": handle_autostart,
+    "botcoin_autostop": handle_autostop,
 }
 
 

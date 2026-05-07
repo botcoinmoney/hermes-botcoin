@@ -149,6 +149,38 @@ def main() -> int:
         """Withdraw previously-unstaked BOTCOIN after the 24h cooldown."""
         return _json_loads_or_dict(t.handle_withdraw_stake())
 
+    @server.tool()
+    def botcoin_bind_agent_id(agent_id: str | int) -> dict:
+        """Explicitly bind an ERC-8004 agentId to the configured miner address.
+
+        Walks /v1/agent/bind/nonce → personal_sign → /v1/agent/bind/verify.
+        """
+        return _json_loads_or_dict(t.handle_bind_agent_id({"agent_id": agent_id}))
+
+    @server.tool()
+    def botcoin_autostart(
+        schedule: str = "every 90s",
+        solver: str | None = None,
+        model: str | None = None,
+        max_per_day: int | None = None,
+        deliver: str = "local",
+    ) -> dict:
+        """Schedule a Hermes cron job that runs `hermes-botcoin-mine` every cycle.
+
+        Idempotent: returns the existing job's id if one is already scheduled.
+        Cost ceiling enforced via `BOTCOIN_MAX_ATTEMPTS_PER_DAY` (default 100).
+        Only available when invoked from inside the Hermes runtime.
+        """
+        return _json_loads_or_dict(t.handle_autostart({
+            "schedule": schedule, "solver": solver, "model": model,
+            "max_per_day": max_per_day, "deliver": deliver,
+        }))
+
+    @server.tool()
+    def botcoin_autostop() -> dict:
+        """Stop the BOTCOIN autonomous miner cron job (no-op if not scheduled)."""
+        return _json_loads_or_dict(t.handle_autostop())
+
     server.run()
     return 0
 

@@ -322,10 +322,95 @@ BOTCOIN_WITHDRAW_STAKE_SCHEMA = {
 }
 
 
+# ---------------------------------------------------------------------------
+# ERC-8004 binding
+
+
+BOTCOIN_BIND_AGENT_ID_SCHEMA = {
+    "name": "botcoin_bind_agent_id",
+    "description": (
+        "Explicitly bind an ERC-8004 agentId to the configured miner address. "
+        "Walks the canonical fallback flow: POST /v1/agent/bind/nonce → sign the "
+        "returned message via the configured signer → POST /v1/agent/bind/verify. "
+        "Use this when auto-bind during /v1/auth/verify did not run (e.g. multiple "
+        "candidate agents for your wallet, or you registered the agent after auth). "
+        "Signing wallet must be the agent NFT owner OR the configured agentWallet "
+        "(per ERC-8004 setAgentWallet). Re-binding overwrites a prior association."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "agent_id": {
+                "type": ["string", "integer"],
+                "description": "Numeric ERC-8004 agentId to bind. e.g. 30804.",
+            },
+        },
+        "required": ["agent_id"],
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Cron — autonomous mining lifecycle
+
+
+BOTCOIN_AUTOSTART_SCHEMA = {
+    "name": "botcoin_autostart",
+    "description": (
+        "Schedule a Hermes cron job that runs `hermes-botcoin-mine` every cycle "
+        "with `no_agent=True` (no LLM-loop overhead per tick — only the explicit "
+        "solver call inside the script pays for inference). Returns the cron job "
+        "id. Idempotent: if a BOTCOIN miner cron job already exists, this returns "
+        "its id instead of creating a duplicate. Hard cost ceiling enforced via "
+        "BOTCOIN_MAX_ATTEMPTS_PER_DAY (default 100) — the script self-reports "
+        "today's attempt count and exits early when exceeded."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "schedule": {
+                "type": "string",
+                "description": "Cron schedule string (Hermes format). Defaults to 'every 90s'. Coordinator rate limit is 1 challenge/min/miner — keep ≥ 60s.",
+                "default": "every 90s",
+            },
+            "solver": {
+                "type": "string",
+                "description": "Solver provider. Defaults to BOTCOIN_SOLVER_PROVIDER env or 'venice'.",
+            },
+            "model": {
+                "type": "string",
+                "description": "Override the per-provider default model (optional).",
+            },
+            "max_per_day": {
+                "type": "integer",
+                "description": "Hard cap on attempts per UTC day. Defaults to BOTCOIN_MAX_ATTEMPTS_PER_DAY env or 100.",
+            },
+            "deliver": {
+                "type": "string",
+                "description": "Where to deliver successful-mine output (local | telegram | discord | ...). Defaults to 'local'.",
+                "default": "local",
+            },
+        },
+        "required": [],
+    },
+}
+
+BOTCOIN_AUTOSTOP_SCHEMA = {
+    "name": "botcoin_autostop",
+    "description": (
+        "Stop the BOTCOIN autonomous miner cron job created by botcoin_autostart. "
+        "Removes the cron job entirely; no further attempts will be scheduled. "
+        "Already-running jobs (if mid-tick) finish their current attempt."
+    ),
+    "parameters": {"type": "object", "properties": {}, "required": []},
+}
+
+
 ALL_TOOLS = [
     ("botcoin_status", BOTCOIN_STATUS_SCHEMA, "⛏"),
     ("botcoin_setup_check", BOTCOIN_SETUP_CHECK_SCHEMA, "🩺"),
     ("botcoin_scorecard", BOTCOIN_SCORECARD_SCHEMA, "🪪"),
+    ("botcoin_bind_agent_id", BOTCOIN_BIND_AGENT_ID_SCHEMA, "🔗"),
     ("botcoin_request_challenge", BOTCOIN_REQUEST_CHALLENGE_SCHEMA, "🧩"),
     ("botcoin_submit_artifact", BOTCOIN_SUBMIT_ARTIFACT_SCHEMA, "✅"),
     ("botcoin_post_receipt", BOTCOIN_POST_RECEIPT_SCHEMA, "📜"),
@@ -333,4 +418,6 @@ ALL_TOOLS = [
     ("botcoin_stake", BOTCOIN_STAKE_SCHEMA, "🔒"),
     ("botcoin_unstake", BOTCOIN_UNSTAKE_SCHEMA, "🔓"),
     ("botcoin_withdraw_stake", BOTCOIN_WITHDRAW_STAKE_SCHEMA, "🏦"),
+    ("botcoin_autostart", BOTCOIN_AUTOSTART_SCHEMA, "⏱"),
+    ("botcoin_autostop", BOTCOIN_AUTOSTOP_SCHEMA, "🛑"),
 ]
