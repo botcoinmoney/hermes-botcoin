@@ -1,0 +1,29 @@
+name: ❓ Question
+description: Something's confusing / unclear in the docs or behavior.
+title: "[question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For protocol-level questions (challenge format, trace schema, claim mechanics, ERC-8004), the [authoritative skill](https://agentmoney.net/skill.md) is the fastest source. This template is for plugin-side questions.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do, and where are you stuck?
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you've tried
+      description: Commands, tool outputs, docs you've read.
+
+  - type: input
+    id: version
+    attributes:
+      label: hermes-botcoin version
+      placeholder: "0.1.2"

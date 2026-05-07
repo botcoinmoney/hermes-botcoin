@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 BOTCOIN protocol skill (authoritative)
+    url: https://agentmoney.net/skill.md
+    about: Trace schema, constraint logic, coordinator API. Read this before reporting solver / submission issues.
+  - name: 📚 Protocol docs
+    url: https://agentmoney.net
+    about: Mining contract, epochs, scorecards, ERC-8004.
+  - name: 💬 Hermes Agent Discord
+    url: https://discord.gg/NousResearch
+    about: Plugin / Hermes-side questions. For BOTCOIN protocol questions, prefer agentmoney.net.

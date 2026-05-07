@@ -11,6 +11,14 @@
 
 **Mine BOTCOIN. Native to Hermes Agent. Privacy-first via Venice.**
 
+[![PyPI version](https://img.shields.io/pypi/v/hermes-botcoin?label=hermes-botcoin&color=blue)](https://pypi.org/project/hermes-botcoin/)
+[![PyPI MCP version](https://img.shields.io/pypi/v/hermes-botcoin-mcp?label=hermes-botcoin-mcp&color=blue)](https://pypi.org/project/hermes-botcoin-mcp/)
+[![Python](https://img.shields.io/badge/python-%E2%89%A53.11-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![CI](https://github.com/botcoinmoney/hermes-botcoin/actions/workflows/ci.yml/badge.svg)](https://github.com/botcoinmoney/hermes-botcoin/actions/workflows/ci.yml)
+[![Downloads](https://img.shields.io/pypi/dm/hermes-botcoin?color=blue)](https://pypi.org/project/hermes-botcoin/)
+[![Verified on Base](https://img.shields.io/badge/verified-on--chain%20mining-success)](https://basescan.org/tx/0xca525fef9d4b7af1e310270f89c899ed75e4f60a719c93be899d4fe75e3c35bc)
+
 </div>
 
 # hermes-botcoin

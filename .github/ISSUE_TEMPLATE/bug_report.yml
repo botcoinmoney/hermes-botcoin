@@ -1,0 +1,100 @@
+name: 🐛 Bug report
+description: Something is broken — receipt won't post, tool errors out, MCP server crashes, etc.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Before filing, please check the [authoritative protocol skill](https://agentmoney.net/skill.md) — many "bugs" are coordinator/protocol behaviors that the skill explains.
+
+  - type: input
+    id: version
+    attributes:
+      label: hermes-botcoin version
+      description: "`pip show hermes-botcoin | grep Version` or check `~/.hermes/plugins/botcoin/plugin.yaml`"
+      placeholder: "0.1.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_path
+    attributes:
+      label: Install path
+      options:
+        - "hermes plugins install botcoinmoney/hermes-botcoin --enable"
+        - "pip install hermes-botcoin"
+        - "pip install hermes-botcoin-mcp (MCP server)"
+        - "Coordinator well-known skill (hermes skills install <url>)"
+        - Other / unsure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: signer
+    attributes:
+      label: Signer mode
+      options:
+        - "eoa (BOTCOIN_MINER_KEY)"
+        - "bankr (BANKR_API_KEY)"
+        - "Not configured / read-only path"
+    validations:
+      required: true
+
+  - type: input
+    id: hermes_version
+    attributes:
+      label: Hermes Agent version
+      description: "`hermes --version`"
+      placeholder: "0.12.x"
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.11.9"
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: A clear, concise description of the bug. Paste exact error messages and tool output (with secrets redacted).
+      placeholder: |
+        Running `/botcoin claim 41,42` returns `EpochNotFinalized` even though 12 hours have passed since epoch 42 ended.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Exact commands or tool calls. Include nonce / challengeId values if relevant (those are public).
+      placeholder: |
+        1. /botcoin status        # epoch 76, my staked balance 5M
+        2. /botcoin request_challenge
+        3. (LLM solve)
+        4. /botcoin submit_artifact …
+        5. → returns: <error here>
+    validations:
+      required: true
+
+  - type: textarea
+    id: tx_hashes
+    attributes:
+      label: Relevant transaction hashes (if any)
+      description: BaseScan links help us debug fast. **Never** paste private keys or API tokens.
+      placeholder: |
+        receipt: https://basescan.org/tx/0x…
+        claim:   https://basescan.org/tx/0x…
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I've read [`/.well-known/skill.md`](https://coordinator.agentmoney.net/.well-known/skill.md) for protocol-side rules
+          required: true
+        - label: I'm on the latest version (or noted my version above)
+          required: true
+        - label: This issue isn't already filed
+          required: true
