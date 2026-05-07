@@ -70,6 +70,38 @@ def setup_cli_parser(parser: argparse.ArgumentParser) -> None:
     p_wd = sub.add_parser("withdraw", help="Withdraw after cooldown")
     p_wd.set_defaults(func=lambda a: print(t.handle_withdraw_stake()))
 
+    # Parity with /botcoin slash subcommands (bind / autostart / autostop).
+    p_bind = sub.add_parser("bind", help="Explicitly bind an ERC-8004 agentId to the miner")
+    p_bind.add_argument("--agent-id", required=True,
+                        help="Numeric ERC-8004 agentId, e.g. 30804")
+    p_bind.set_defaults(func=lambda a: print(t.handle_bind_agent_id({"agent_id": a.agent_id})))
+
+    p_auto_start = sub.add_parser(
+        "autostart",
+        help="Schedule a Hermes cron job for autonomous mining (no_agent=True)",
+    )
+    p_auto_start.add_argument("--schedule", default="every 90s",
+                              help="Hermes cron schedule string (default 'every 90s'; coordinator rate limits cap at 1/min)")
+    p_auto_start.add_argument("--solver", default=None,
+                              choices=["venice", "anthropic", "openai", "openrouter", "deepseek"],
+                              help="LLM provider for the cron miner. Defaults to BOTCOIN_SOLVER_PROVIDER or venice.")
+    p_auto_start.add_argument("--model", default=None,
+                              help="Override per-provider default model")
+    p_auto_start.add_argument("--max-per-day", type=int, default=None,
+                              help="Hard daily attempt cap. Defaults to BOTCOIN_MAX_ATTEMPTS_PER_DAY or 100.")
+    p_auto_start.add_argument("--deliver", default="local",
+                              help="Hermes cron delivery channel (local | telegram | discord | ...)")
+    p_auto_start.set_defaults(func=lambda a: print(t.handle_autostart({
+        "schedule": a.schedule, "solver": a.solver, "model": a.model,
+        "max_per_day": a.max_per_day, "deliver": a.deliver,
+    })))
+
+    p_auto_stop = sub.add_parser(
+        "autostop",
+        help="Stop the autonomous BOTCOIN miner cron job",
+    )
+    p_auto_stop.set_defaults(func=lambda a: print(t.handle_autostop()))
+
 
 def handle_cli(args: argparse.Namespace) -> int:
     """Dispatch table — argparse sets ``args.func`` for each subcommand."""

@@ -1,5 +1,5 @@
 name: botcoin
-version: "0.1.2"
+version: "0.1.3"
 description: "Mine BOTCOIN on Base via the AgentMoney coordinator. Adds /botcoin slash, hermes botcoin CLI, an always-on discoverability hook, and a bundled mining-strategy skill. The agent itself is the solver — challenges flow as tool results, you produce the artifact, the plugin handles auth, signing, and on-chain receipts."
 author: "BOTCOIN (botcoinmoney)"
 license: MIT

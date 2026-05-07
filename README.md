@@ -45,11 +45,10 @@ hermes plugins install botcoinmoney/hermes-botcoin --enable
 
 Hermes will:
 1. `git clone --depth 1` this repo into `~/.hermes/plugins/botcoin/`.
-2. Walk `requires_env` from `plugin.yaml` and prompt you for the secrets you don't already have (`BANKR_API_KEY` xor `BOTCOIN_MINER_KEY`, plus optional `BOTCOIN_MINER_ADDRESS`, `COORDINATOR_URL`, `BASE_RPC_URL`). Secrets land in `~/.hermes/.env` — they never reach an LLM.
-3. Add `botcoin` to `plugins.enabled` in `~/.hermes/config.yaml`.
-4. Show you `after-install.md` with verification steps.
+2. Add `botcoin` to `plugins.enabled` in `~/.hermes/config.yaml`.
+3. Show you `after-install.md` with verification steps.
 
-Restart Hermes. Run `/botcoin setup` to confirm everything is wired up.
+The plugin loads with **zero env vars set** — `plugin.yaml` deliberately ships no `requires_env` block, so installation never gets gated on a credential the user might not have ready. Restart Hermes and run `/botcoin setup` to see the full checklist of what to configure (signer key, optional Venice API key for cron mode, etc.). The setup tool is always visible even before any signer is configured. Secrets you provide land in `~/.hermes/.env` — they never reach an LLM.
 
 ### B — MCP server
 
@@ -137,7 +136,7 @@ You can always top up later — `/botcoin stake <additional_amount>` adds to you
 
 ## Configuration
 
-All secrets and overrides live in `~/.hermes/.env`. The `requires_env` block in `plugin.yaml` is the source of truth.
+All secrets and overrides live in `~/.hermes/.env`. **Nothing is required at install time** — `plugin.yaml` ships without `requires_env` so the plugin loads cleanly with no env vars set; tools that genuinely need a signer or solver are gated at the registry layer (`check_fn`), and `/botcoin setup` walks you through what's still missing. The full set of variables the plugin and the cron miner read:
 
 | Variable | Required | Purpose |
 |---|---|---|

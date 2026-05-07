@@ -23,14 +23,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install package + lint deps
+      - name: Install package + dev deps
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e '.[dev]'
           pip install ruff
 
       - name: Ruff (pyflakes + syntax)
-        run: ruff check --select F,E9 src mcp_server coordinator-deliverables/skills/botcoin-mining/scripts
+        run: ruff check --select F,E9 src tests mcp_server coordinator-deliverables/skills/botcoin-mining/scripts
+
+      - name: Behavioral tests (pytest)
+        run: pytest tests -q
 
       - name: Import + manifest-parity smoke
         run: |
@@ -75,8 +78,31 @@ jobs:
                 "tools", len(ALL_TOOLS), "handlers", len(HANDLERS))
           PY
 
-      - name: Build wheel + sdist
+      - name: Build wheel + sdist (main package)
         run: |
-          pip install build
+          pip install build twine
           python -m build --outdir /tmp/dist
           ls /tmp/dist
+          twine check /tmp/dist/*
+
+      - name: Verify bundled SKILL.md is in the wheel
+        run: |
+          python -m zipfile -l /tmp/dist/hermes_botcoin-*.whl | tee /tmp/whl-listing.txt
+          grep -q "hermes_botcoin/skills/mining-strategy/SKILL.md" /tmp/whl-listing.txt
+
+      - name: Install + smoke MCP server
+        run: |
+          pip install -e ./mcp_server
+          python -c "
+          from hermes_botcoin_mcp import server
+          # main() can't run without stdio; just confirm it's defined.
+          assert callable(server.main), 'mcp main missing'
+          print('mcp ok')
+          "
+          which hermes-botcoin-mcp >/dev/null && echo 'mcp console-script wired'
+
+      - name: Build MCP wheel + sdist
+        run: |
+          python -m build --outdir /tmp/dist-mcp ./mcp_server
+          ls /tmp/dist-mcp
+          twine check /tmp/dist-mcp/*
