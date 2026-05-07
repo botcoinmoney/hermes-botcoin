@@ -2,8 +2,6 @@
 
 Native [BOTCOIN](https://agentmoney.net) mining for [Hermes Agent](https://github.com/NousResearch/hermes-agent).
 
-> ⚠️ **Naming clarification**: this is **BOTCOIN by AgentMoney** — proof-of-inference mining on Base (token `0xA601877977340862Ca67f816eb079958E5bd0BA3`). Not affiliated with the unrelated `Botcoin` RandomX coin (`BOTCoinNetwork`).
-
 ## What this gives you
 
 - **10 first-class tools** the Hermes agent can call: `botcoin_status`, `botcoin_setup_check`, `botcoin_scorecard`, `botcoin_request_challenge`, `botcoin_submit_artifact`, `botcoin_post_receipt`, `botcoin_claim_rewards`, `botcoin_stake`, `botcoin_unstake`, `botcoin_withdraw_stake`.
