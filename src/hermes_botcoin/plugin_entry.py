@@ -4,6 +4,11 @@ The repo-root ``__init__.py`` (used by ``hermes plugins install``) and the
 PyPI ``hermes_agent.plugins`` entry point both delegate to
 :func:`register_module` here so the registration logic lives in exactly one
 place. ``register_module`` is the symbol Hermes' entry-point loader looks for.
+
+On first registration we print the BOTCOIN ASCII banner once to whatever
+file the plugin loader is currently writing to (stderr in the Hermes CLI
+under normal operation). This is intentionally cheap — no I/O if Hermes
+captures the stream.
 """
 
 from __future__ import annotations
@@ -18,8 +23,34 @@ from .schemas import ALL_TOOLS
 logger = logging.getLogger(__name__)
 
 
+_BANNER_PRINTED = False
+
+
+def _print_banner_once() -> None:
+    """Print the BOTCOIN banner to stderr on first plugin registration.
+
+    No-op when stderr isn't a TTY (e.g. Hermes' headless CLI logging) — the
+    banner is for humans, not log streams.
+    """
+    global _BANNER_PRINTED
+    if _BANNER_PRINTED:
+        return
+    _BANNER_PRINTED = True
+    try:
+        import sys
+        if not (sys.stderr and sys.stderr.isatty()):
+            return
+        from .banner import render
+        sys.stderr.write("\n" + render() + "\n\n")
+        sys.stderr.flush()
+    except Exception:  # pragma: no cover — never let a banner fail the load
+        pass
+
+
 def register(ctx: Any) -> None:
     """Hermes plugin registration. Wires tools, slash, CLI, hooks, and skill."""
+
+    _print_banner_once()
 
     # 1. Tools
     handler_map = tools.HANDLERS

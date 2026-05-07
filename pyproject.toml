@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hermes-botcoin"
-version = "0.1.0"
+version = "0.1.1"
 description = "Mine BOTCOIN (proof-of-inference on Base) natively from Hermes Agent. Plugin + CLI + cron-mode autonomous miner."
 readme = "README.md"
 requires-python = ">=3.11"
