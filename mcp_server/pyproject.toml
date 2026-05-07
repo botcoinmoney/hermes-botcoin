@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-botcoin-mcp"
+version = "0.1.0"
+description = "MCP server for BOTCOIN proof-of-inference mining on Base. Drop-in for any MCP client (Hermes Agent, Claude Desktop, Cursor)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "BOTCOIN (botcoinmoney)" }]
+keywords = ["mcp", "model-context-protocol", "botcoin", "base", "ethereum", "agent", "mining"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "mcp>=1.2.0,<2",
+  "hermes-botcoin>=0.1.0,<1",
+]
+
+[project.scripts]
+hermes-botcoin-mcp = "hermes_botcoin_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/botcoinmoney/hermes-botcoin"
+Coordinator = "https://coordinator.agentmoney.net"
+
+[tool.setuptools]
+packages = ["hermes_botcoin_mcp"]
+package-dir = { "hermes_botcoin_mcp" = "." }
