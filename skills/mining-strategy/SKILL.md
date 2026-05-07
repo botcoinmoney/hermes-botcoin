@@ -21,6 +21,57 @@ file at the coordinator is authoritative for protocol-level rules — when
 this skill and that file disagree, the coordinator wins. Reload it before
 every session if anything looks stale.
 
+## Funding the miner — two paths
+
+Before mining, the miner wallet needs **5,000,000 BOTCOIN staked** (Tier 1 minimum) plus a small **ETH balance on Base** for gas. Pick the path that matches what the user already has — these are the two least-resistance routes.
+
+### Path A — Bankr (lowest friction; ~5 min)
+
+Use this when the user does **not** already have a Base wallet, or wants the agent to handle bridging + swapping via natural language.
+
+1. **API key** — direct user to <https://bankr.bot/api>; sign up, enable Agent API, ensure read-only mode is OFF, copy the key.
+2. **Wire env** — write to `~/.hermes/.env`:
+   - `BANKR_API_KEY=bk_...`
+   - `BOTCOIN_SIGNER=bankr`
+3. **Restart the Hermes session** so the new env loads.
+4. **Confirm wiring** — call `botcoin_setup_check`. Expect `signer_mode: bankr` and a Base wallet address.
+5. **Bridge → swap → stake** in a single user-initiated prompt. Bankr exposes natural-language verbs over its `/agent/prompt` endpoint:
+   - `"bridge $20 of ETH to base"` — gets gas + swap-budget on the right chain.
+   - `"swap $15 of ETH to 0xA601877977340862Ca67f816eb079958E5bd0BA3 on base"` — Bankr handles Uniswap routing. Re-check balance after; you need ≥ 5,000,000 BOTCOIN.
+   - `botcoin_stake({"amount": "5000000"})` — agent tool, sends approve + stake on-chain.
+6. **Mine** — `botcoin_status`, then `botcoin_request_challenge`, etc. Or `botcoin_autostart` for cron mode.
+
+### Path B — EOA (existing private key; ~10–20 min)
+
+Use this when the user already controls a Base wallet (MetaMask, Foundry, hardware wallet) and wants local-key signing.
+
+1. **Get the private key** — exported from MetaMask (`Account details → Show private key`), `cast wallet new`, or the user's existing keystore. Must be 0x-prefixed, 64 hex chars.
+2. **Fund with ETH on Base** — wallet needs ≥ 0.001 ETH for receipts; ≥ 0.005 ETH if also doing the swap on-chain. Bridges: <https://bridge.base.org> or <https://across.to>.
+3. **Wire env** — `~/.hermes/.env`:
+   - `BOTCOIN_MINER_KEY=0xYOUR_KEY`
+   - `BOTCOIN_SIGNER=eoa`
+   - (optional) `BASE_RPC_URL=...` — set a private RPC for better rate limits than `mainnet.base.org`.
+4. **Acquire BOTCOIN** — pick one:
+   - **Uniswap web UI** (recommended for first-time users): <https://app.uniswap.org/swap?chain=base&outputCurrency=0xA601877977340862Ca67f816eb079958E5bd0BA3>. The user signs in their browser wallet. Tell them to **verify the token contract is `0xA601877977340862Ca67f816eb079958E5bd0BA3`** before approving.
+   - **Foundry `cast`** (programmatic): the user runs `cast send` against the Universal Router at `0x6fF5693b99212Da76ad316178A184AB56D299b43` on Base. Combine with the bundled [`base`](https://github.com/NousResearch/hermes-agent/tree/main/optional-skills/blockchain/base) skill for RPC primitives.
+   - **Centralized exchange withdrawal** — only if the user's CEX lists BOTCOIN. They must withdraw to **Base** (chain 8453), not Ethereum L1.
+5. **Verify the balance** in the wallet (≥ 5,000,000 whole BOTCOIN), then call `botcoin_stake({"amount": "5000000"})`. The plugin sends two on-chain txs (approve + stake) signed by the local key, EIP-1559 type-2.
+6. **Mine** — same as Path A from step 6.
+
+### Tier ladder
+
+| Staked | Credits / solve |
+|---|---|
+| ≥ 5M | 100 |
+| ≥ 10M | 205 |
+| ≥ 25M | 520 |
+| ≥ 50M | 1,075 |
+| ≥ 100M | 2,200 |
+
+Top-up: `botcoin_stake({"amount": "<additional>"})` adds to the existing stake without triggering the unstake cooldown.
+
+---
+
 ## Workflow at a Glance
 
 1. `botcoin_setup_check` — run once at session start; fix any `ok: false` items.

@@ -61,6 +61,72 @@ mcp_servers:
       BOTCOIN_SIGNER: eoa
 ```
 
+## Funding the miner — two paths
+
+You need **5,000,000 BOTCOIN staked** + a small **ETH balance on Base** for gas before you can mine. Pick whichever path matches what you already have.
+
+### Path A — Bankr (lowest friction; ~5 min, no Base wallet needed)
+
+[Bankr](https://bankr.bot) is an agent-native wallet/API service. Sign-up gives you a Base wallet you control via API. Recommended if you don't already have a Base wallet.
+
+1. **Sign up** at <https://bankr.bot/api> (email or X login).
+2. **Enable Agent API** in the dashboard. Make sure **read-only mode is OFF** — mining requires write access. Optional: lock `allowedIps` to your Hermes host.
+3. **Copy the API key**, then add to `~/.hermes/.env`:
+   ```
+   BANKR_API_KEY=bk_xxxxxxxxxxxx
+   BOTCOIN_SIGNER=bankr
+   ```
+4. **Restart Hermes.** Confirm wiring:
+   ```
+   /botcoin setup
+   ```
+   It should report `signer_mode: bankr` and your Base wallet address.
+5. **Fund + swap + stake in one prompt.** Ask the agent:
+   > "Bridge $20 of ETH to Base, then swap $15 of ETH to `0xA601877977340862Ca67f816eb079958E5bd0BA3` on base, then stake 5000000 BOTCOIN."
+
+   The agent uses Bankr's natural-language API for the bridge + swap (Bankr handles Uniswap routing) and the `botcoin_stake` tool for the on-chain stake. Each step is a separate Bankr job — Hermes polls them to completion automatically.
+6. **Verify, then mine:**
+   ```
+   /botcoin status      # confirms stake_meets_tier_1: true
+   /botcoin autostart   # optional — kicks off autonomous cron mining
+   ```
+
+### Path B — EOA (existing private key; ~10–20 min)
+
+For users who already have a Base wallet (MetaMask, Foundry, hardware wallet) with ETH and want full control of signing locally.
+
+1. **Have your 0x-prefixed private key.** Export from MetaMask (`Account details → Show private key`), Foundry (`cast wallet new` or your existing keystore), or your hardware-wallet flow.
+2. **Make sure the wallet has ETH on Base** (~0.001 ETH minimum for gas; ~0.005 ETH if you also need to do the on-chain swap below). [bridge.base.org](https://bridge.base.org) and [Across](https://across.to) are both fine.
+3. **Add to `~/.hermes/.env`:**
+   ```
+   BOTCOIN_MINER_KEY=0xYOUR_PRIVATE_KEY
+   BOTCOIN_SIGNER=eoa
+   BASE_RPC_URL=https://mainnet.base.org      # or your private RPC
+   ```
+4. **Acquire BOTCOIN.** Pick whichever you prefer:
+   - **Uniswap web UI** (easiest, one-time): <https://app.uniswap.org/swap?chain=base&outputCurrency=0xA601877977340862Ca67f816eb079958E5bd0BA3> → connect wallet → swap enough ETH for **at least 5,000,000 BOTCOIN**. Verify the contract address matches `0xA601877977340862Ca67f816eb079958E5bd0BA3` before signing.
+   - **Foundry / `cast`** (programmatic): swap via the Uniswap V3 router on Base. The bundled [optional-skills/blockchain/base](https://github.com/NousResearch/hermes-agent/tree/main/optional-skills/blockchain/base) skill (`hermes skills install official/blockchain/base`) gives you the RPC primitives; combine with `cast send` against the Universal Router at `0x6fF5693b99212Da76ad316178A184AB56D299b43`.
+   - **Centralized exchange** (least relevant): few CEXes list BOTCOIN. If yours does, withdraw to your Base address — verify it's the Base network, not Ethereum L1.
+5. **Verify, stake, mine:**
+   ```
+   /botcoin setup            # checklist should now be all-green
+   /botcoin stake 5000000    # approve + stake in one tool call
+   /botcoin status           # epoch + tier confirmation
+   /botcoin autostart        # optional — autonomous cron mining
+   ```
+
+### Tier ladder (more stake = more credits/solve)
+
+| Staked | Credits / solve |
+|---|---|
+| ≥ 5M | 100 |
+| ≥ 10M | 205 |
+| ≥ 25M | 520 |
+| ≥ 50M | 1,075 |
+| ≥ 100M | 2,200 |
+
+You can always top up later — `/botcoin stake <additional_amount>` adds to your existing stake without unstake-cooldown overhead.
+
 ## Configuration
 
 All secrets and overrides live in `~/.hermes/.env`. The `requires_env` block in `plugin.yaml` is the source of truth.

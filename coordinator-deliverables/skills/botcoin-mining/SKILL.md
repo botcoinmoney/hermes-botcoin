@@ -40,6 +40,32 @@ This skill works **standalone** (with the bundled `botcoin_client.py` helper) an
 - MiningContractV3: `0xB2fbe0DB5A99B4E2Dd294dE64cEd82740b53A2Ea`
 - BonusEpoch: `0xA185fE194A7F603b7287BC0abAeBA1b896a36Ba8`
 
+## Funding paths — pick the one matching what you already have
+
+You need **5,000,000 BOTCOIN staked** + a small **ETH balance on Base** for gas. Two least-resistance paths:
+
+### Path A — Bankr (~5 min, no Base wallet needed)
+
+1. Sign up at <https://bankr.bot/api>; enable Agent API (write access ON).
+2. `~/.hermes/.env`: `BANKR_API_KEY=bk_...` and `BOTCOIN_SIGNER=bankr`.
+3. Ask the agent: *"Bridge $20 of ETH to Base, then swap $15 of ETH to `0xA601877977340862Ca67f816eb079958E5bd0BA3` on base, then stake 5000000 BOTCOIN."* Bankr handles bridge + Uniswap routing; the helper's `stake` subcommand handles the on-chain stake.
+4. Verify: `python3 botcoin_client.py setup`.
+
+### Path B — EOA (~10–20 min, your own private key)
+
+1. Export your Base wallet's 0x-prefixed private key. Fund with ≥ 0.005 ETH on Base ([bridge.base.org](https://bridge.base.org) or [Across](https://across.to)).
+2. `~/.hermes/.env`: `BOTCOIN_MINER_KEY=0x...` and `BOTCOIN_SIGNER=eoa`.
+3. Acquire BOTCOIN — easiest: **Uniswap web UI** at <https://app.uniswap.org/swap?chain=base&outputCurrency=0xA601877977340862Ca67f816eb079958E5bd0BA3>. Verify the token contract before approving. Buy enough to reach **≥ 5,000,000 BOTCOIN**.
+4. Stake on-chain:
+   ```bash
+   python3 ~/.hermes/skills/blockchain/botcoin-mining/scripts/botcoin_client.py stake --amount 5000000
+   ```
+5. Verify: `python3 botcoin_client.py setup`.
+
+Tier ladder: ≥5M → 100 credits, ≥10M → 205, ≥25M → 520, ≥50M → 1,075, ≥100M → 2,200.
+
+---
+
 ## Quick Reference
 
 ```bash

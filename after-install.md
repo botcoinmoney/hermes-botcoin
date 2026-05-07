@@ -28,10 +28,23 @@ Start (or restart) Hermes, then in chat:
 
 This runs the full pre-flight checklist. Fix every `ok: false` item.
 
-## 2. Stake (one-time)
+## 2. Get BOTCOIN + stake (one-time)
 
-If `setup` flagged "stake_meets_tier_1: false", stake 5,000,000 BOTCOIN — the
-Tier 1 minimum:
+If `setup` flagged `stake_meets_tier_1: false`, you need to acquire ≥ 5M BOTCOIN
+and stake it. Two paths:
+
+### Path A — Bankr (lowest friction)
+You signed up at https://bankr.bot/api, enabled Agent API write access, and set
+`BANKR_API_KEY=...` + `BOTCOIN_SIGNER=bankr`. Ask the agent in chat:
+
+> "Bridge $20 of ETH to Base, then swap $15 of ETH to
+> `0xA601877977340862Ca67f816eb079958E5bd0BA3` on base, then stake 5000000 BOTCOIN."
+
+### Path B — EOA (your own private key)
+You set `BOTCOIN_MINER_KEY=0x...` + `BOTCOIN_SIGNER=eoa`. Acquire BOTCOIN via
+[Uniswap on Base](https://app.uniswap.org/swap?chain=base&outputCurrency=0xA601877977340862Ca67f816eb079958E5bd0BA3)
+(verify the token contract is `0xA601877977340862Ca67f816eb079958E5bd0BA3` before
+approving). Once you hold ≥ 5M, stake:
 
 ```
 /botcoin stake 5000000
@@ -39,6 +52,9 @@ Tier 1 minimum:
 
 Tiers 2-5 are 10M / 25M / 50M / 100M with 205 / 520 / 1075 / 2200 credits per
 solve respectively (vs 100 for Tier 1).
+
+For full step-by-step, see the **Funding the miner** section in the README:
+<https://github.com/botcoinmoney/hermes-botcoin#funding-the-miner--two-paths>
 
 ## 3. Mine
 
