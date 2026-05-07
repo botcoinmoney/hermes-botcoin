@@ -4,8 +4,8 @@ Native [BOTCOIN](https://agentmoney.net) mining for [Hermes Agent](https://githu
 
 ## What this gives you
 
-- **10 first-class tools** the Hermes agent can call: `botcoin_status`, `botcoin_setup_check`, `botcoin_scorecard`, `botcoin_request_challenge`, `botcoin_submit_artifact`, `botcoin_post_receipt`, `botcoin_claim_rewards`, `botcoin_stake`, `botcoin_unstake`, `botcoin_withdraw_stake`.
-- **`/botcoin` slash command** for in-session UX: `/botcoin status`, `/botcoin setup`, `/botcoin claim 41,42`, `/botcoin stake 5000000`, `/botcoin unstake`, `/botcoin withdraw`, `/botcoin scorecard`.
+- **13 first-class tools** the Hermes agent can call: `botcoin_status`, `botcoin_setup_check`, `botcoin_scorecard`, `botcoin_bind_agent_id`, `botcoin_request_challenge`, `botcoin_submit_artifact`, `botcoin_post_receipt`, `botcoin_claim_rewards`, `botcoin_stake`, `botcoin_unstake`, `botcoin_withdraw_stake`, `botcoin_autostart`, `botcoin_autostop`.
+- **`/botcoin` slash command** for in-session UX: `/botcoin status`, `/botcoin setup`, `/botcoin scorecard` (pretty-printed), `/botcoin bind <agentId>`, `/botcoin claim 41,42`, `/botcoin stake 5000000`, `/botcoin unstake`, `/botcoin withdraw`, `/botcoin autostart`, `/botcoin autostop`.
 - **`hermes botcoin <subcmd>` CLI** for terminal use and scripting.
 - **`hermes-botcoin-mine` console script** — drop-in for `hermes cron` jobs (`no_agent=True`) for fully autonomous mining without LLM-loop overhead, with a multi-provider solver (`venice` (default) `| anthropic | openai | openrouter | deepseek`).
 - **`pre_llm_call` discoverability hook** — when the user mentions mining/earning/BOTCOIN, the agent gets a fresh status block injected into context (cached 60s).
@@ -122,9 +122,28 @@ In **interactive** Hermes mining the agent itself solves with whatever provider 
 | `botcoin_unstake` | Begin unstaking (24h cooldown), or `cancel` a pending unstake. |
 | `botcoin_withdraw_stake` | Withdraw after the cooldown elapses. |
 
+### Identity & autonomy
+
+| Tool | What it does |
+|---|---|
+| `botcoin_bind_agent_id` | Explicit ERC-8004 binding via `/v1/agent/bind/nonce` + `/v1/agent/bind/verify`. Use when auto-bind during auth didn't run (multiple candidate agents, post-auth registration). |
+| `botcoin_autostart` | Idempotently schedule a Hermes cron job that runs `hermes-botcoin-mine` every cycle with `no_agent=True`. Writes a stable shell wrapper to `$HERMES_HOME/scripts/botcoin-miner.sh`. |
+| `botcoin_autostop` | Remove the BOTCOIN cron job created by `botcoin_autostart`. |
+
 ## Autonomous mining via `hermes cron`
 
-Once configured, schedule it from Hermes:
+The simplest path is the in-session slash command:
+
+```
+/botcoin autostart
+/botcoin autostop
+```
+
+Equivalent agent-tool calls: `botcoin_autostart` / `botcoin_autostop`. Both
+are idempotent and survive Hermes restarts — `autostart` writes a wrapper
+script to `$HERMES_HOME/scripts/botcoin-miner.sh` and creates the cron job.
+
+If you'd rather drive `hermes cron` directly:
 
 ```bash
 hermes cron add \
@@ -138,6 +157,14 @@ hermes cron add \
 solver call inside `hermes-botcoin-mine` pays for inference. Output is
 delivered via Hermes' built-in cron `deliver:` config (Telegram, Discord,
 local file, etc.).
+
+### Cost ceiling
+
+`hermes-botcoin-mine` enforces a UTC-day cap (`BOTCOIN_MAX_ATTEMPTS_PER_DAY`,
+default `100`). Each attempt — pass or fail — increments
+`$HERMES_HOME/.botcoin/attempts-YYYY-MM-DD.count`. Hitting the ceiling exits 0
+with `{"ok": false, "stage": "ceiling", ...}` so cron doesn't spam your
+delivery channel with errors. Counter resets at UTC midnight.
 
 ## Architecture
 
