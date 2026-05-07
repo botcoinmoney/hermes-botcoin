@@ -285,17 +285,7 @@ Beyond the install paths, the project ships three additional surfaces:
 2. **`pre_llm_call` hook** — when the user mentions mining-related keywords, the model gets fresh BOTCOIN context.
 3. **Pip entry-point** (`hermes_agent.plugins`) so `pip install hermes-botcoin` is also a valid install path.
 
-## Development
-
-```bash
-git clone https://github.com/botcoinmoney/hermes-botcoin
-cd hermes-botcoin
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e '.[dev]'
-pytest -q
-```
-
-The repository hosts:
+## Layout
 
 | Path | Purpose |
 |---|---|
@@ -304,9 +294,6 @@ The repository hosts:
 | `mcp_server/` | Separate PyPI package (`hermes-botcoin-mcp`). |
 | `skills/mining-strategy/` | Bundled deep-skill SKILL.md. |
 | `coordinator-deliverables/` | Drop-in files for the BOTCOIN coordinator (well-known skills index + SKILL.md + helper script). |
-| `BUILD_PLAN.md` | Day-by-day build & ship plan. |
-| `VERIFIED_ASSUMPTIONS.md` | Source-of-truth verifications against the Hermes repo. |
-| `tests/` | Unit tests for trace normalization, signer dispatch, schemas. |
 
 ## License
 

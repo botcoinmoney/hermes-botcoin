@@ -20,3 +20,8 @@ htmlcov/
 .idea/
 .vscode/
 *.log
+
+# Local-dev only — not part of the public tree
+tests/
+BUILD_PLAN.md
+VERIFIED_ASSUMPTIONS.md
